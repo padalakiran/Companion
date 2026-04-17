@@ -74,7 +74,7 @@ def test_reminders_has_three_keys(tmp_path, monkeypatch):
     assert "break"   in reminders
     assert "stretch" in reminders
 
-def test_reminders_each_has_label_and_message(tmp_path, monkeypatch):
+def test_reminders_each_has_three_elements(tmp_path, monkeypatch):
     monkeypatch.setattr(config, "USER_DATA", str(tmp_path / "user.xlsx"))
     import health_reminder as mod
     importlib.reload(mod)
@@ -82,11 +82,14 @@ def test_reminders_each_has_label_and_message(tmp_path, monkeypatch):
     class Stub:
         _load_interval = staticmethod(mod.HealthReminder._load_interval)
     reminders = prop_fn(Stub())
+    # REMINDERS returns {key: (title, message, color)} — tuples, not dicts
     for key, val in reminders.items():
-        assert "label"   in val, f"'{key}' missing 'label'"
-        assert "message" in val, f"'{key}' missing 'message'"
-        assert "interval" in val, f"'{key}' missing 'interval'"
-        assert "color"   in val, f"'{key}' missing 'color'"
+        assert isinstance(val, tuple),      f"'{key}' should be a tuple"
+        assert len(val) == 3,               f"'{key}' tuple needs 3 elements: (title, message, color)"
+        title, message, color = val
+        assert len(title)   > 0,            f"'{key}' title is empty"
+        assert len(message) > 0,            f"'{key}' message is empty"
+        assert color.startswith("#"),       f"'{key}' color is not a hex string"
 
 
 # ── Config defaults ───────────────────────────────────────────────────────────

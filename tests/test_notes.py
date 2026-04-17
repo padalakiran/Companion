@@ -24,9 +24,9 @@ def _get_root():
 def _text():
     """Return a fresh tk.Text widget with common tags configured."""
     ta = tk.Text(_get_root())
-    ta.tag_config("bold",      font=("Arial", 10, "bold"))
-    ta.tag_config("italic",    font=("Arial", 10, "italic"))
-    ta.tag_config("underline", underline=True)
+    ta.tag_config("bold",   font=("Arial", 10, "bold"))
+    ta.tag_config("italic", font=("Arial", 10, "italic"))
+    ta.tag_config("under",  underline=True)   # tag name is "under" not "underline"
     return ta
 
 def _import(monkeypatch, tmp_path):
@@ -77,12 +77,12 @@ def test_underline_roundtrip():
     ta = _text()
     ta.insert("end", "Hello ")
     ta.insert("end", "Under")
-    ta.tag_add("underline", "1.6", "1.11")
+    ta.tag_add("under", "1.6", "1.11")   # tag is "under" not "underline"
     markup = encode_rich(ta)
     assert "__Under__" in markup
     ta2 = _text()
     decode_rich(ta2, markup)
-    assert "underline" in ta2.tag_names("1.6")
+    assert "under" in ta2.tag_names("1.6")
 
 def test_bullet_preserved():
     from features.notes import encode_rich, decode_rich
