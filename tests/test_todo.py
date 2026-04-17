@@ -4,7 +4,7 @@ Unit tests for features/todo.py — save/load helpers only (no tkinter).
 """
 import sys
 import os
-import openpyxl
+#import openpyxl
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import config

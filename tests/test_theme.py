@@ -4,7 +4,7 @@ Unit tests for theme.py — pure Python, no tkinter, runs headlessly on CI.
 """
 import sys
 import os
-import tempfile
+#import tempfile
 import openpyxl
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
