@@ -112,7 +112,8 @@ def theme_for_character(path: str) -> str:
 # Any character whose filename maps to a known theme key uses that theme automatically
 def is_predefined(char_path: str) -> bool:
     """True if this character has an explicit theme mapping."""
-    import os as _os, config as _cfg
+    #import os as _os
+    import config as _cfg
     if char_path == _cfg.SPRITESHEET: return True   # original cat
     key = theme_for_character(char_path)
     if key == "default": return False               # fallback = not predefined
