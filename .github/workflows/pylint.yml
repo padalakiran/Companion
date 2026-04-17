@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ── Job 1: Lint + Unit tests (Ubuntu, headless) ─────────────────────────────
+  lint-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pillow openpyxl
+          pip install pytest pytest-cov ruff
+
+      - name: Lint with ruff
+        run: ruff check . --select=F,E9 --exclude=generate_assets.py
+
+      - name: Run unit tests
+        run: |
+          # Set up virtual display for tkinter on Ubuntu (needed by test_notes.py)
+          sudo apt-get install -y xvfb python3-tk
+          export DISPLAY=:99
+          Xvfb :99 -screen 0 1024x768x24 &
+          sleep 1
+          pytest tests/ -v --tb=short
+
+  # ── Job 2: Build .exe (Windows, tag push only) ──────────────────────────────
+  build-exe:
+    runs-on: windows-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: lint-and-test
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install pillow openpyxl pyinstaller
+
+      - name: Build .exe with PyInstaller
+        run: |
+          pyinstaller main.py `
+            --onedir `
+            --windowed `
+            --name DesktopCatCompanion `
+            --add-data "assets;assets" `
+            --add-data "characters;characters"
+
+      - name: Upload .exe as artefact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DesktopCatCompanion-windows-${{ github.ref_name }}
+          path: dist/DesktopCatCompanion/
+          retention-days: 30
