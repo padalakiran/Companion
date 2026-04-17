@@ -212,7 +212,7 @@ def build(parent: tk.Frame, root: tk.Tk):
     lf = tk.Frame(cv, bg=_c("BG"))
     cwin = cv.create_window((0,0), window=lf, anchor="nw")
 
-    sb_widget = _custom_scrollbar(wrap, cv)
+    #sb_widget = _custom_scrollbar(wrap, cv)
 
     def _on_lf_configure(e):
         bb = cv.bbox("all")

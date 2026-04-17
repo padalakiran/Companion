@@ -113,7 +113,7 @@ def _draw_weather_icon(canvas, key: str, cx: int, cy: int, size: int = 48):
 
     elif key == "fog":
         for i, dy in enumerate([-6, 0, 6]):
-            alpha = 200 - i*40
+            #alpha = 200 - i*40
             canvas.create_line(cx-s+4, cy+dy, cx+s-4, cy+dy,
                                fill=_c("SUB"), width=4, capstyle="round")
 
@@ -236,7 +236,7 @@ def build(parent: tk.Frame, root: tk.Tk):
     fdesc= tkfont.Font(family="Segoe UI", size=11)
     fday = tkfont.Font(family="Segoe UI", size=9, weight="bold")
 
-    state = {"loading": False, "data": None, "error": None}
+    #state = {"loading": False, "data": None, "error": None}
 
     # ── Loading / error / content frames ─────────────────────────────────────
     def show_loading():

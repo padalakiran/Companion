@@ -230,13 +230,13 @@ def build(parent: tk.Frame, root: tk.Tk, notify_fn=None):
     )
 
     # Hint text below timer
-    hint_id = arc_cv.create_text(
-        ARC//2, ARC//2 + 36,
-        text="click to edit",
-        font=fsl,
-        fill=BORDER,
-        tags="hint_text"
-    )
+    # hint_id = arc_cv.create_text(
+    #     ARC//2, ARC//2 + 36,
+    #     text="click to edit",
+    #     font=fsl,
+    #     fill=BORDER,
+    #     tags="hint_text"
+    # )
 
     # ── Inline edit overlay ───────────────────────────────────────────────────
     edit_frame = None   # will hold the entry frame when editing

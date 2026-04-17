@@ -629,7 +629,7 @@ def build(parent: tk.Frame, root: tk.Tk, user: dict = None,
     env_data  = _load_env()
 
     fb  = tkfont.Font(family="Segoe UI", size=10)
-    fbn = tkfont.Font(family="Segoe UI", size=10, weight="bold")
+    #fbn = tkfont.Font(family="Segoe UI", size=10, weight="bold")
     fs  = tkfont.Font(family="Segoe UI", size=9)
 
     # Feedback label at top

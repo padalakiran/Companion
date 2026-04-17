@@ -258,7 +258,7 @@ def build(parent: tk.Frame, root: tk.Tk, user: dict = None):
     history = _load_recent_history(20)   # load from Excel on open
 
     fh   = tkfont.Font(family="Segoe UI", size=11, weight="bold")
-    fb   = tkfont.Font(family="Segoe UI", size=10)
+    #fb   = tkfont.Font(family="Segoe UI", size=10)
     fs   = tkfont.Font(family="Segoe UI", size=9)
     fbn  = tkfont.Font(family="Segoe UI", size=10, weight="bold")
     fe   = tkfont.Font(family="Segoe UI", size=11)
