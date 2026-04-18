@@ -243,8 +243,6 @@
 #           retention-days: 30
 
 
-
-
 name: CI
 
 on:
@@ -259,7 +257,7 @@ on:
     types: [created]
 
 jobs:
-  # ── Job 1: Lint + Unit tests ───────────────────────────────────────────────
+  # ───────────────────────────── LINT + TEST ─────────────────────────────
   lint-and-test:
     runs-on: ubuntu-latest
 
@@ -290,7 +288,7 @@ jobs:
           sleep 1
           pytest tests/ -v --tb=short
 
-  # ── Job 2: Build Windows .exe ─────────────────────────────────────────────
+  # ───────────────────────────── BUILD EXE ─────────────────────────────
   build-exe:
     runs-on: windows-latest
     needs: lint-and-test
@@ -314,6 +312,7 @@ jobs:
           pip install --upgrade pip
           pip install pillow openpyxl pyinstaller
 
+      # ───── VERSION DETECTION ─────
       - name: Determine version
         id: version
         shell: pwsh
@@ -331,6 +330,7 @@ jobs:
           echo "VERSION=$ver" >> $env:GITHUB_OUTPUT
           echo "Using version: $ver"
 
+      # ───── PATCH updater.py ─────
       - name: Patch version into updater.py
         shell: pwsh
         run: |
@@ -338,6 +338,7 @@ jobs:
           (Get-Content updater.py) -replace 'CURRENT_VERSION = ".*"', "CURRENT_VERSION = `"$ver`"" | Set-Content updater.py
           echo "Patched CURRENT_VERSION to $ver"
 
+      # ───── CREATE version_info.txt (FIXED INDENTATION) ─────
       - name: Create version_info.txt
         shell: pwsh
         run: |
@@ -350,7 +351,7 @@ jobs:
 
           $v1,$v2,$v3,$v4 = $parts
 
-          @"
+          $content = @"
           VSVersionInfo(
             ffi=FixedFileInfo(
               filevers=($v1,$v2,$v3,$v4),
@@ -364,17 +365,20 @@ jobs:
             ),
             kids=[]
           )
-          "@ | Set-Content version_info.txt
+          "@
           
+                    $content | Set-Content version_info.txt
                     echo "Created version_info.txt for $ver"
-          
-                - name: Build .exe with PyInstaller
-                  run: |
-                    pyinstaller DesktopCatCompanion.spec
-          
-                - name: Upload .exe as artifact
-                  uses: actions/upload-artifact@v4
-                  with:
-                    name: DesktopCatCompanion-${{ steps.version.outputs.VERSION }}
-                    path: dist/DesktopCatCompanion/
-                    retention-days: 30
+
+      # ───── BUILD EXE ─────
+      - name: Build .exe with PyInstaller
+        run: |
+          pyinstaller DesktopCatCompanion.spec
+
+      # ───── UPLOAD ARTIFACT ─────
+      - name: Upload .exe artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: DesktopCatCompanion-${{ steps.version.outputs.VERSION }}
+          path: dist/DesktopCatCompanion/
+          retention-days: 30
