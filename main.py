@@ -6,7 +6,7 @@ from user_data       import get_or_create_user
 from cat_widget      import CatWidget
 from dashboard       import Dashboard
 from health_reminder import HealthReminder
-import config
+#import config
 import theme
 import updater
 
