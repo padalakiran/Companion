@@ -6,8 +6,9 @@ from user_data       import get_or_create_user
 from cat_widget      import CatWidget
 from dashboard       import Dashboard
 from health_reminder import HealthReminder
-#import config
+import config
 import theme
+import updater
 
 
 class App:
@@ -46,7 +47,6 @@ class App:
             self._root,
             on_click_callback=self._on_cat_clicked,
         )
-        # Give dashboard reference to cat widget for character hot-swap
         self._dashboard.set_cat_widget(self._cat)
 
         # Wire cat widget to dashboard for character hot-swap + theming
@@ -54,6 +54,9 @@ class App:
 
         self._root.protocol("WM_DELETE_WINDOW", self.quit)
         print(f"[Cat Companion] Hello, {self._name}! Reminders running.")
+
+        # Check for updates in the background (5 s after launch, non-blocking)
+        updater.check_in_background(self._root)
 
     # ── Callbacks ─────────────────────────────────────────────────────────────
 
