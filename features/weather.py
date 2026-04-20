@@ -9,8 +9,12 @@
 import tkinter as tk
 from tkinter import font as tkfont
 from datetime import datetime
-import threading, time, json, os
-import urllib.request, urllib.error
+import threading
+import time
+import json
+import os
+import urllib.request
+import urllib.error
 import config
 
 import theme as _theme_mod
@@ -143,31 +147,13 @@ def _save_cache(data: dict):
     except Exception:
         pass
 
-def _load_env() -> dict:
-    """Parse .env file from project root into a dict."""
-    env = {}
-    env_path = os.path.join(config.BASE_DIR, ".env")
-    if not os.path.exists(env_path):
-        return env
-    try:
-        with open(env_path, "r") as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith("#") or "=" not in line:
-                    continue
-                key, _, val = line.partition("=")
-                env[key.strip()] = val.strip().strip('"').strip("'")
-    except Exception as e:
-        print(f"[weather] .env read error: {e}")
-    return env
-
 def _get_api_key() -> str:
-    """Read WEATHER_API_KEY from .env file."""
-    return _load_env().get("WEATHER_API_KEY", "")
+    import supabase_config
+    return supabase_config.get_key("Weather_key")
 
 def _get_city() -> str:
-    """Read WEATHER_CITY from .env, fallback to DEFAULT_CITY."""
-    return _load_env().get("WEATHER_CITY", DEFAULT_CITY)
+    import supabase_config
+    return supabase_config.get_key("City", DEFAULT_CITY)
 
 def _fetch_weather(api_key: str, city: str) -> dict | None:
     """Fetch current + forecast from OpenWeatherMap. Returns parsed dict or None."""
@@ -259,15 +245,15 @@ def build(parent: tk.Frame, root: tk.Tk):
         form.pack(pady=20)
 
         # API key entry
-        # tk.Label(form, text="API Key:", font=fs, bg=_c("BG"), fg=_c("SUB")).grid(
-        #     row=0, column=0, sticky="e", padx=(0,8), pady=4)
-        # key_wrap = tk.Frame(form, bg=_c("BORDER"))
-        # key_wrap.grid(row=0, column=1, pady=4)
-        # key_var = tk.StringVar(value=_get_api_key())
-        # tk.Entry(key_wrap, textvariable=key_var, font=fb,
-        #          bg=_c("CARD"), fg=_c("TEXT"), insertbackground=_c("ACCENT"),
-        #          relief="flat", bd=0, width=26, show="•"
-        #          ).pack(padx=1, pady=1, ipady=6)
+        tk.Label(form, text="API Key:", font=fs, bg=_c("BG"), fg=_c("SUB")).grid(
+            row=0, column=0, sticky="e", padx=(0,8), pady=4)
+        key_wrap = tk.Frame(form, bg=_c("BORDER"))
+        key_wrap.grid(row=0, column=1, pady=4)
+        key_var = tk.StringVar(value=_get_api_key())
+        tk.Entry(key_wrap, textvariable=key_var, font=fb,
+                 bg=_c("CARD"), fg=_c("TEXT"), insertbackground=_c("ACCENT"),
+                 relief="flat", bd=0, width=26, show="•"
+                 ).pack(padx=1, pady=1, ipady=6)
 
         # City entry
         tk.Label(form, text="City:", font=fs, bg=_c("BG"), fg=_c("SUB")).grid(
@@ -284,12 +270,7 @@ def build(parent: tk.Frame, root: tk.Tk):
         err_lbl.pack()
 
         def save_and_fetch():
-           # key  = key_var.get().strip()
-            city = city_var.get().strip() or DEFAULT_CITY
-            # if not key:
-            #     err_lbl.config(text="API key is required."); return
-            # _save_setting("WEATHER_API_KEY", key)
-            _save_setting("WEATHER_CITY", city)
+            #city = city_var.get().strip() or DEFAULT_CITY
             _save_cache({})   # invalidate cache
             load_weather()
 
@@ -468,26 +449,5 @@ def build(parent: tk.Frame, root: tk.Tk):
 # ── Settings helper ────────────────────────────────────────────────────────────
 
 def _save_setting(key: str, value: str):
-    """Write key=value to .env file (creates if missing, updates if exists)."""
-    env_path = os.path.join(config.BASE_DIR, ".env")
-    env = _load_env()
-    env[key] = value
-    try:
-        lines = []
-        if os.path.exists(env_path):
-            with open(env_path, "r") as f:
-                lines = f.readlines()
-        # Update existing key or append
-        found = False
-        for i, line in enumerate(lines):
-            if line.strip().startswith(key + "=") or line.strip().startswith(key + " ="):
-                lines[i] = f"{key}={value}\n"
-                found = True
-                break
-        if not found:
-            lines.append(f"{key}={value}\n")
-        with open(env_path, "w") as f:
-            f.writelines(lines)
-        print(f"[weather] saved {key} to .env")
-    except Exception as e:
-        print(f"[weather] .env write error: {e}")
+    """Keys are managed via Supabase dashboard — no local save."""
+    print(f"[weather] {key} is managed via Supabase")

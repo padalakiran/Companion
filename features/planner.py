@@ -2,7 +2,9 @@
 import tkinter as tk
 from tkinter import font as tkfont
 from datetime import datetime, date, timedelta
-import os, openpyxl, config
+import os
+import openpyxl
+import config
 
 _notified: set = set()
 _timer_running: bool = False

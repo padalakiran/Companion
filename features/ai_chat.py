@@ -9,8 +9,12 @@
 import tkinter as tk
 from tkinter import font as tkfont
 from datetime import datetime, date
-import threading, time, os, json
-import urllib.request, urllib.error
+import threading
+import time
+import os
+import json
+import urllib.request
+import urllib.error
 import config
 
 import theme as _theme_mod
@@ -26,26 +30,10 @@ is fine, but don't overdo it). You are concise — keep replies under 120 words 
 explicitly asks for more detail. You know the user's context (provided below) and can reference \
 it naturally when relevant. Never be condescending. Always be encouraging."""
 
-# ── .env helper ───────────────────────────────────────────────────────────────
-def _load_env() -> dict:
-    env = {}
-    env_path = os.path.join(config.BASE_DIR, ".env")
-    if not os.path.exists(env_path):
-        return env
-    try:
-        with open(env_path, "r") as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith("#") or "=" not in line:
-                    continue
-                k, _, v = line.partition("=")
-                env[k.strip()] = v.strip().strip('"').strip("'")
-    except Exception as e:
-        print(f"[chat] .env error: {e}")
-    return env
-
+# ── API key ───────────────────────────────────────────────────────────────────
 def _get_api_key() -> str:
-    return _load_env().get("GEMINI_API_KEY", "")
+    import supabase_config
+    return supabase_config.get_key("Gemini_key")
 
 # ── Context gathering ─────────────────────────────────────────────────────────
 def _build_context(user: dict) -> str:
@@ -144,11 +132,7 @@ _GEMINI_MODELS = [
 ]
 
 def _gemini_url(model: str, api_key: str) -> str:
-    env = _load_env()
-    base = env.get(
-        "GEMINI_API_URL",
-        "https://generativelanguage.googleapis.com/v1beta/models"
-    ).rstrip("/")
+    base = "https://generativelanguage.googleapis.com/v1beta/models"
     return f"{base}/{model}:generateContent?key={api_key}"
 
 def _sanitise_history(messages: list[dict]) -> list[dict]:
@@ -223,7 +207,7 @@ def _call_gemini(messages: list[dict], system: str, api_key: str) -> str:
             if e.code == 400:
                 return "⚠ Invalid request. Please try again."
             if e.code == 403:
-                return "⚠ Invalid API key. Check GEMINI_API_KEY in your .env file."
+                return "⚠ Gemini API key is invalid or missing. Contact the developer."
             if e.code == 429:
                 print(f"[chat] rate limited on {model}, trying next…")
                 time.sleep(2)
@@ -244,7 +228,7 @@ def _call_gemini(messages: list[dict], system: str, api_key: str) -> str:
         return ("⚠ Rate limit reached — Gemini free tier is busy.\n"
                 "Please wait 60 seconds and try again.")
     if "API_KEY" in last_error.upper() or "403" in last_error:
-        return "⚠ Invalid API key. Check GEMINI_API_KEY in your .env file."
+        return "⚠ Gemini API key is invalid or missing. Contact the developer."
     if "404" in last_error:
         return "⚠ Gemini model not available. Check your API key tier."
     return "⚠ Could not reach Gemini. Check your internet connection."
@@ -266,13 +250,11 @@ def build(parent: tk.Frame, root: tk.Tk, user: dict = None):
 
     # ── No API key screen ─────────────────────────────────────────────────────
     if not api_key:
-        tk.Label(parent, text="🐱  AI Chat Setup",
+        tk.Label(parent, text="🐱  AI Chat",
                  font=fh, bg=_c("BG"), fg=_c("ACCENT")).pack(pady=(30,8))
         tk.Label(parent,
-                 text="Add your Anthropic API key to the .env file\n"
-                      "in your project folder to enable AI chat.\n\n"
-                      "GEMINI_API_KEY=your_key_here\n\n"
-                      "Get a FREE key at: aistudio.google.com",
+                 text="AI Chat is not available right now.\n"
+                      "Please contact the developer.",
                  font=fs, bg=_c("BG"), fg=_c("SUB"), justify="center").pack()
         tk.Button(parent, text="↺  I've added my key — reload",
                   font=fbn, bg=_c("ACCENT"), fg=_c("BG"),

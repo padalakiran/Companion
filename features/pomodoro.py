@@ -8,7 +8,11 @@
 import tkinter as tk
 from tkinter import font as tkfont
 from datetime import datetime, date
-import threading, time, os, openpyxl, config
+import threading
+import time
+import os
+import openpyxl
+import config
 
 _T=__import__("theme"); BG=_T.get("BG"); CARD=_T.get("CARD"); BORDER=_T.get("BORDER"); ACCENT=_T.get("ACCENT"); TEXT=_T.get("TEXT"); SUB=_T.get("SUB"); GREEN=_T.get("GREEN"); RED=_T.get("RED"); YELLOW=_T.get("YELLOW"); ORANGE=_T.get("ORANGE")
 

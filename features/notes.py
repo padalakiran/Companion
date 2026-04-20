@@ -7,7 +7,9 @@
 import tkinter as tk
 from tkinter import font as tkfont
 from datetime import datetime
-import os, openpyxl, config
+import os
+import openpyxl
+import config
 
 import theme as _theme_mod
 def _c(k): return _theme_mod.get(k)
