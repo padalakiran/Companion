@@ -8,6 +8,7 @@ from dashboard       import Dashboard
 from health_reminder import HealthReminder
 #import config
 import theme
+#import supabase_config
 import updater
 
 
@@ -55,7 +56,7 @@ class App:
         self._root.protocol("WM_DELETE_WINDOW", self.quit)
         print(f"[Cat Companion] Hello, {self._name}! Reminders running.")
 
-        # Check for updates in the background (5 s after launch, non-blocking)
+        # Check for updates 5 s after launch (Supabase keys fetched on demand)
         updater.check_in_background(self._root)
 
     # ── Callbacks ─────────────────────────────────────────────────────────────

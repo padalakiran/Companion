@@ -61,6 +61,26 @@ def _save_user(data: dict):
         print(f"[user_data] Save error: {e}")
 
 
+def get_installed_version() -> str:
+    """Read app_version from user.xlsx. Returns empty string if not set."""
+    try:
+        data = _load_user()
+        return str(data.get("app_version", "")).strip()
+    except Exception:
+        return ""
+
+
+def save_installed_version(version: str):
+    """Write app_version into user.xlsx (adds/updates the key)."""
+    try:
+        data = _load_user()
+        data["app_version"] = str(version).strip()
+        _save_user(data)
+        print(f"[user_data] app_version saved: {version}")
+    except Exception as e:
+        print(f"[user_data] save_installed_version error: {e}")
+
+
 # ── Welcome dialog ───────────────────────────────────────────────────────────
 
 def _prompt_name(root: tk.Tk) -> str:
@@ -80,7 +100,7 @@ def _prompt_name(root: tk.Tk) -> str:
     TEXT   = _t.get("TEXT")
     SUB    = _t.get("SUB")
 
-    W, H = 420, 380
+    W, H = 380, 310
     sw   = root.winfo_screenwidth()
     sh   = root.winfo_screenheight()
 
