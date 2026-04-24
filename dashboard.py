@@ -1,21 +1,12 @@
-# ── dashboard.py ──────────────────────────────────────────────────────────────
-# Phase 3b fixes:
-#   - Custom title bar (no default tkinter chrome)
-#   - Health shows real values on first open (not null)
-#   - No close icon inside the window chrome
-# Phase 4:
-#   - Cat notification popup with speech bubble (like the reference image)
-
 import tkinter as tk
 from tkinter import font as tkfont
 from datetime  import datetime, date
-#import threading
-#import time
+import threading
+import time
 import os
 import openpyxl
 import config
 import theme
-
 # ── Palette — always read live from theme ─────────────────────────────────────
 import theme as _theme_mod
 
@@ -436,20 +427,57 @@ class Dashboard:
                                    font=f_title, bg=CARD, fg=ACCENT)
         self._title_lbl.pack(side="left", pady=10)
 
-        # Window controls — minimise + close on the right
+        # Window controls — minimise, kill, close (right side)
         f_ctrl = tkfont.Font(family="Segoe UI", size=12)
 
-        tk.Button(titlebar, text="✕",
+        def _tooltip(widget, text):
+            """Attach a simple hover tooltip to a widget."""
+            tip = None
+            def _show(e):
+                nonlocal tip
+                tip = tk.Toplevel(widget)
+                tip.overrideredirect(True)
+                tip.attributes("-topmost", True)
+                tip.configure(bg=BORDER)
+                tk.Label(tip, text=text,
+                         font=tkfont.Font(family="Segoe UI", size=8),
+                         bg=CARD, fg=TEXT, padx=6, pady=3).pack()
+                tip.geometry(f"+{e.x_root+8}+{e.y_root+18}")
+            def _hide(e):
+                nonlocal tip
+                if tip:
+                    try: tip.destroy()
+                    except: pass
+                    tip = None
+            widget.bind("<Enter>", _show)
+            widget.bind("<Leave>", _hide)
+
+        # Close button (✕)
+        btn_close = tk.Button(titlebar, text="✕",
                   font=f_ctrl, bg=CARD, fg=SUB,
                   activebackground=DANGER, activeforeground="white",
                   relief="flat", cursor="hand2", bd=0, width=3,
-                  command=self._handle_close).pack(side="right", pady=8, padx=4)
+                  command=self._handle_close)
+        btn_close.pack(side="right", pady=8, padx=4)
+        _tooltip(btn_close, "Close dashboard")
 
-        tk.Button(titlebar, text="─",
+        # Kill button (⏻) — stops entire app
+        btn_kill = tk.Button(titlebar, text="⏻",
+                  font=f_ctrl, bg=CARD, fg="#E24B4A",
+                  activebackground="#E24B4A", activeforeground="white",
+                  relief="flat", cursor="hand2", bd=0, width=3,
+                  command=self._kill_app)
+        btn_kill.pack(side="right", pady=8)
+        _tooltip(btn_kill, "Quit app completely")
+
+        # Minimise button (─)
+        btn_min = tk.Button(titlebar, text="─",
                   font=f_ctrl, bg=CARD, fg=SUB,
                   activebackground=BORDER, activeforeground=TEXT,
                   relief="flat", cursor="hand2", bd=0, width=3,
-                  command=self._minimise).pack(side="right", pady=8)
+                  command=self._minimise)
+        btn_min.pack(side="right", pady=8)
+        _tooltip(btn_min, "Minimise dashboard")
 
 
         # Back button (hidden on home)
@@ -461,6 +489,7 @@ class Dashboard:
             relief="flat", cursor="hand2", bd=0, width=2,
             command=self._show_home,
         )
+        _tooltip(self._back_btn, "Back to home")
 
         # Drag the window via title bar
         titlebar.bind("<ButtonPress-1>",  self._drag_start)
@@ -549,7 +578,7 @@ class Dashboard:
             if tile["key"] == key:
                 TILES[i]["sub"] = sub
                 break
-        # Also update the live weather subtitle label if it's on screen
+        # Update the live weather subtitle label immediately (before home rebuild)
         if key == "weather":
             lbl = getattr(self, "_weather_sub_lbl", None)
             if lbl:
@@ -558,9 +587,39 @@ class Dashboard:
                         lbl.config(text=sub)
                 except Exception:
                     pass
+            # Also force-refresh the home grid if we are on home right now
+            # so the tile shows updated city without needing to navigate away
+            try:
+                if hasattr(self, "_content_frame") and self._content_frame.winfo_exists():
+                    # Check if home is currently shown (back button is hidden)
+                    if not self._back_btn.winfo_ismapped():
+                        self._show_home()
+            except Exception:
+                pass
 
     def _show_home(self):
         self._swap_content(self._build_home, title="Companion Dashboard", show_back=False)
+
+    @staticmethod
+    def _get_weather_city_display_static():
+        """Read saved city from user.xlsx for tile display. Falls back to Supabase."""
+        try:
+            import openpyxl as _xl
+            if os.path.exists(config.USER_DATA):
+                _wb = _xl.load_workbook(config.USER_DATA)
+                _ws = _wb.active
+                for _row in _ws.iter_rows(values_only=True):
+                    if _row and _row[0] == "weather_city" and _row[1]:
+                        city = str(_row[1]).strip()
+                        return city if ", " in city else f"{city}, IN"
+        except Exception as e:
+            print(f"[dashboard] city read error: {e}")
+        try:
+            import supabase_config
+            city = supabase_config.get_key("City", "Bengaluru")
+            return f"{city}, IN" if city else "Bengaluru, IN"
+        except Exception:
+            return "Bengaluru, IN"
 
     def _build_home(self, parent):
         _refresh_colours()
@@ -627,19 +686,10 @@ class Dashboard:
                        font=tkfont.Font(family="Segoe UI", size=11, weight="bold"),
                        bg=CARD, fg=TEXT, anchor="w", cursor="hand2")
         lbl.place(x=12, y=56)
-        # Read live subtitle — for weather tile, read city from .env
+        # Read live subtitle — for weather tile, always read from user.xlsx
         sub_text = tile["sub"]
         if tile.get("sub_key") == "weather_city":
-            try:
-                env_path = os.path.join(config.BASE_DIR, ".env")
-                if os.path.exists(env_path):
-                    with open(env_path) as _ef:
-                        for _line in _ef:
-                            if _line.strip().startswith("WEATHER_CITY="):
-                                sub_text = _line.strip().split("=",1)[1].strip().strip('"').strip("'")
-                                break
-            except Exception:
-                pass
+            sub_text = Dashboard._get_weather_city_display_static()
 
         sub = tk.Label(card, text=sub_text,
                        font=tkfont.Font(family="Segoe UI", size=9),
@@ -756,7 +806,7 @@ class Dashboard:
             cnt_lbl.pack(anchor="e")
             tk.Label(right, text="today", font=f_sub, bg=CARD, fg=SUB).pack(anchor="e")
 
-            tk.Button(right, text="Log  +1",
+            tk.Button(right, text=f"Log  +1",
                       font=f_btn, bg=color, fg="#1A1B2E",
                       activebackground=BORDER, activeforeground=TEXT,
                       relief="flat", cursor="hand2", bd=0,
@@ -947,9 +997,18 @@ class Dashboard:
                      bg=BG, fg=SUB).pack()
         self._swap_content(builder, title=title)
 
-    # ── Close ─────────────────────────────────────────────────────────────────
+    # ── Close / Kill ──────────────────────────────────────────────────────────
 
     def _handle_close(self):
         self.close()
         if self._on_close:
             self._on_close()
+
+    def _kill_app(self):
+        """Kill the entire app — stops health reminders and destroys root."""
+        try:
+            self._root.quit()
+            self._root.destroy()
+        except Exception:
+            import sys
+            sys.exit(0)
