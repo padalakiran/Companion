@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import font as tkfont
 from datetime  import datetime, date
-import threading
-import time
+#import threading
+#import time
 import os
 import openpyxl
 import config
@@ -806,7 +806,7 @@ class Dashboard:
             cnt_lbl.pack(anchor="e")
             tk.Label(right, text="today", font=f_sub, bg=CARD, fg=SUB).pack(anchor="e")
 
-            tk.Button(right, text=f"Log  +1",
+            tk.Button(right, text="Log  +1",
                       font=f_btn, bg=color, fg="#1A1B2E",
                       activebackground=BORDER, activeforeground=TEXT,
                       relief="flat", cursor="hand2", bd=0,
