@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import font as tkfont
 from datetime  import datetime, date
-import threading
+#import threading
 #import time
 import os
 import openpyxl
